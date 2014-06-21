@@ -16,7 +16,7 @@ Design
 ======
 The complete browsing session is stored within an IndexedDB database.
 Every change on the internal model is immediately commited to the database.
-Like [TabsOutliner™] _Session Outliner_ is able to operate with multiple views.
+Like TabsOutliner™ _Session Outliner_ is able to operate with multiple views.
 This is achieved by the event driven communication through
 [content workers](https://developer.mozilla.org/en-US/Add-ons/SDK/Low-Level_APIs/content_worker)
 between the backend and the content scripts of the frontend.
