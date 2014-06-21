@@ -1,0 +1,23 @@
+
+html>body {
+    font-family: Verdana, helvetica, arial, sans-serif;
+    font-size: 12px;
+    background-color: #ededed;
+    color: #000;
+}
+
+.jqtree-tree .menu {
+    position: absolute;
+    right: 0px;
+}
+
+.jqtree-tree .menu-link {
+    margin: 4px;
+    vertical-align: middle;
+    color: #d94141;
+}
+
+.jqtree-tree .inactive-node {
+    background-color: lightgrey;
+}
+
