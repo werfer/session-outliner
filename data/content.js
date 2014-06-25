@@ -23,6 +23,7 @@ $(function() {
         dragAndDrop: true,
         onCreateLi: function(node, $li) {
 
+
             $li.find('.jqtree-title').append(
                 '<span class="menu">' +
                 '<span class="menu-link delete" data-node-id="' + node.id + '">delete</span>' +
@@ -42,6 +43,8 @@ $(function() {
                 $li.find('.jqtree-title').prepend(
                     '<img src="' + node.favicon + '" style="width: 16px; height: 16px" />'
                 );
+            } else if (node.type == "separator") {
+                $li.find('.jqtree-element').addClass("separator");
             }
 
         },
@@ -124,7 +127,19 @@ $(function() {
     });
 
     $(".menu").click(function() {
-        addon.port.emit("menuEvent", $(this).attr("id"));
+        var action   = $(this).attr("id");
+        var node     = $tree.tree('getSelectedNode');
+        var targetId;
+
+        if (!!node == false) {
+            var rootNode    = $('#tree1').tree('getTree');
+            var sessionNode = rootNode.children[0];
+            targetId = sessionNode.id;
+        } else {
+            targetId = node.id;
+        }
+
+        addon.port.emit("menuEvent", action, targetId);
     });
 
     $("#update").click(function() {
