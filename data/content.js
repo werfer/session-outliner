@@ -70,7 +70,7 @@ $(function() {
             var node = $tree.tree('getNodeById', node_id);
 
             if (node) {
-                var detach = ("is_open" in node) || !node.is_open;
+                var detach = ("is_open" in node) && node.is_open;
                 addon.port.emit("treeEvent", "removeNode", node_id, detach);
             }
         }
@@ -84,8 +84,8 @@ $(function() {
             var node_id = $(e.target).data('node-id');
             var node = $tree.tree('getNodeById', node_id);
             if (node) {
-                var detach = ("is_open" in node) || !node.is_open;
-                addon.port.emit("treeEvent", "closeNode", node_id, detach);
+                var withSubNodes = ("is_open" in node) && !node.is_open;
+                addon.port.emit("treeEvent", "closeNode", node_id, withSubNodes);
             }
         }
     );
