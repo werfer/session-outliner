@@ -8,7 +8,7 @@ The Add-on is built on top of the [jetpack/Add-on SDK](https://ftp.mozilla.org/p
 
 Status
 ======
-Most of the features offered by TabsOutliner™ are already implement,
+Most of the features offered by TabsOutliner™ are already implemented,
 however, due to a lack of testing this Add-on has not to be considered as stable.
 
 
