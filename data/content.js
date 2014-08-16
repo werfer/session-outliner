@@ -15,38 +15,45 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 $(function() {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
+
+    function hideHoverMenu() {
+        $tree.find('.hmenu').each(function () {
+            $(this).css('visibility', 'hidden');
+        });
+    }
+
+    $tree.mouseleave(hideHoverMenu);
 
     $tree.tree({
         data: [],
         autoOpen: false,
         dragAndDrop: true,
         onCreateLi: function(node, $li) {
-
-
-            $li.find('.jqtree-title').append(
-                '<span class="menu">' +
-                '<span class="menu-link delete" data-node-id="' + node.id + '">delete</span>' +
-                '<span class="menu-link close" data-node-id="' + node.id + '">close</span>' +
-                '</span>'
+            $li.find('.jqtree-element').before(
+                '<div class="hmenu">' +
+                '<span class="hmenu-panel">' +
+                '<span class="hmenu-button delete-action" data-node-id="' + node.id + '"></span>' +
+                '<span class="hmenu-button close-action" data-node-id="' + node.id + '"></span>' +
+                '</span>' +
+                '</div>'
             );
 
-            $li.find('.jqtree-element').mouseover(function(event) {
-                // implement
+            $li.find('.jqtree-element').mouseenter(function () {
+                hideHoverMenu();
+                $(this).prev().css('visibility', 'visible');
             });
 
             if ("active" in node && !node.active) {
-                $li.find('.jqtree-element').addClass("inactive-node");
+                $li.addClass("inactive-node");
             }
 
             if (node.type == "tab") {
-                $li.find('.jqtree-title').prepend(
-                    '<img src="' + node.favicon + '" style="width: 16px; height: 16px" />'
-                );
-            } else if (node.type == "separator") {
-                $li.find('.jqtree-element').addClass("separator");
+                $li.find('.jqtree-title').
+                    before('<img class="icon" src="' + node.favicon + '" />');
             }
 
+            $li.addClass("so-" + node.type + "-node");
         },
         onCanSelectNode: function(node) {
             return true;
@@ -61,7 +68,7 @@ $(function() {
 
     // Handle a click on the delete link
     $tree.on(
-        'click', '.delete',
+        'click', '.delete-action',
         function(e) {
             // Get the id from the 'node-id' data property
             var node_id = $(e.target).data('node-id');
@@ -77,7 +84,7 @@ $(function() {
     );
 
     $tree.on(
-        'click', '.close',
+        'click', '.close-action',
         function(e) {
             // Get the id from the 'node-id' data property
 
@@ -90,7 +97,7 @@ $(function() {
         }
     );
 
-    $('#tree1').bind(
+    $('#sessionTree').bind(
         'tree.dblclick',
         function(e) {
             addon.port.emit("treeEvent", "activateNode", e.node.id);
@@ -101,17 +108,17 @@ $(function() {
         addon.port.emit("treeEvent", "nodeToggle", e.node.id, e.node.is_open);
     }
 
-    $('#tree1').bind(
+    $('#sessionTree').bind(
         'tree.open',
         handleToggle
     );
 
-    $('#tree1').bind(
+    $('#sessionTree').bind(
         'tree.close',
         handleToggle
     );
 
-    $('#tree1').bind(
+    $('#sessionTree').bind(
         'tree.move',
         function(event) {
             event.preventDefault();
@@ -126,13 +133,36 @@ $(function() {
         addon.port.emit("test", $(this).attr("id"));
     });
 
-    $(".menu").click(function() {
+    //[ workaround:
+    $tree.on(
+        'mousedown', '.hmenu-button',
+        function(e) {
+            $(this).addClass('hmenu-button-active');
+        }
+    );
+
+    $tree.on(
+        'mouseleave', '.hmenu-button',
+        function(e) {
+            $(this).removeClass('hmenu-button-active');
+        }
+    );
+
+    $tree.on(
+        'mouseup', '.hmenu-button',
+        function(e) {
+            $(this).removeClass('hmenu-button-active');
+        }
+    );
+    //]
+
+    $(".mainMenuLink").click(function() {
         var action   = $(this).attr("id");
         var node     = $tree.tree('getSelectedNode');
         var targetId;
 
         if (!!node == false) {
-            var rootNode    = $('#tree1').tree('getTree');
+            var rootNode    = $('#sessionTree').tree('getTree');
             var sessionNode = rootNode.children[0];
             targetId = sessionNode.id;
         } else {
@@ -153,7 +183,7 @@ $(function() {
 // ****************************************************************************
 
 function validateTree() {
-    var root = $('#tree1').tree('getTree');
+    var root = $('#sessionTree').tree('getTree');
     var id_mapping = root.id_mapping;
 
     var walker = function(node) {
@@ -183,7 +213,7 @@ function validateTree() {
 
 function loadChildren(node, data) {
     if ("children" in data) {
-        var $tree = $('#tree1');
+        var $tree = $('#sessionTree');
         $tree.tree('loadData', data.children, node);
         return;
     }
@@ -192,12 +222,12 @@ function loadChildren(node, data) {
 // ----------------------------------------------------------------------------
 
 addon.port.on("updateTreeData", function(data) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
     $tree.tree('loadData', [data]);
 });
 
 addon.port.on("updateTreeNode", function(id, data) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
@@ -215,7 +245,7 @@ addon.port.on("updateTreeNode", function(id, data) {
 });
 
 addon.port.on("replaceTreeNode", function(id, data) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
@@ -230,7 +260,7 @@ addon.port.on("replaceTreeNode", function(id, data) {
 });
 
 addon.port.on("removeTreeNode", function(id) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
@@ -244,7 +274,7 @@ addon.port.on("removeTreeNode", function(id) {
 });
 
 addon.port.on("appendTreeNode", function(data, parentId) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var parentNode = $tree.tree('getNodeById', parentId);
     if (!parentNode) {
@@ -259,7 +289,7 @@ addon.port.on("appendTreeNode", function(data, parentId) {
 });
 
 addon.port.on("insertTreeNode", function(data, referenceId, after) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var referenceNode = $tree.tree('getNodeById', referenceId);
     if (!referenceNode) {
@@ -279,7 +309,7 @@ addon.port.on("insertTreeNode", function(data, referenceId, after) {
 });
 
 addon.port.on("moveTreeNode", function(id, referenceId, position) {
-    var $tree = $('#tree1');
+    var $tree = $('#sessionTree');
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {

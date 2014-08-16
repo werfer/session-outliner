@@ -19,24 +19,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <html>
 <head>
 <meta charset="utf-8"/>
-<link rel="stylesheet" href="jqtree/jqtree.css">
 <link rel="stylesheet" href="panel.css">
-
+<link rel="stylesheet" href="tree.css">
+<link rel="stylesheet" href="hmenu.css">
+<link rel="stylesheet" href="mainmenu.css">
 <script src="jquery/jquery-2.1.0.min.js"></script>
 <script src="jqtree/tree.jquery.js"></script>
 <script src="content.js"></script>
-
 <title>Session Outliner</title>
 </head>
 <body>
-
-<div id="tree1"></div>
-<h3>Menu:</h3>
-<button class="menu" id="createGroup">create group</button><br />
-<button class="menu" id="createSeparator">create separator</button><br />
-<button class="menu" id="createNote">create note</button><br />
-<button class="menu" id="openWindow">open window</button><br />
-<button class="menu" id="closeWindows">close windows</button><br />
+<div id="mainMenu">
+<span class="mainMenuButton">
+<a class="mainMenuLink" id="createWindowLink" title="Window"></a>
+</span>
+<span class="mainMenuButton">
+<a class="mainMenuLink" id="createGroupLink" title="Group"></a>
+</span>
+<span class="mainMenuButton">
+<a class="mainMenuLink" id="createSeparatorLink" title="Separator"></a>
+</span>
+<span class="mainMenuButton">
+<a class="mainMenuLink" id="createNoteLink" title="Note"></a>
+</span>
+<span class="mainMenuButton">
+<a class="mainMenuLink" id="closeAllLink" title="Close all open windows"></a>
+</span>
+<!--
+<span class="mainMenuElement">
+<a class="mainMenuLink" id="createWindowLink"></a>
+</span>
+-->
+</div>
+<div id="sessionTree"></div>
+<!--
 <h3>Tests:</h3>
 <span>
 <button class="test" id="test1">tab test</button><br />
@@ -45,7 +61,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <button class="test" id="validate">validate</button><br />
 <button class="test" id="status">status</button><br />
 </span>
-
 <h3>Data:</h3>
 <button id="update">update</button><br />
 <pre>
@@ -53,6 +68,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 empty
 </span>
 </pre>
-
+-->
 </body>
 </html>

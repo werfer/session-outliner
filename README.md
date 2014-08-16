@@ -26,12 +26,16 @@ TODO
 ====
 Probably the most important task to deal with is the improvement of the frontend's apperance.
 Other notable things to implement:
- * completion of the text-node and separator-node support
- * detect opener tab (unlike Chrome Firefox has no _openerTabId_ property)
+ * `[x]` detect opener tab (unlike Chrome Firefox has no _openerTabId_ property)
+ * `[ ]` completion of the text-node and separator-node support
+ * `[ ]` session export/import support
 
 
 Libraries
 =========
 The following libraries were used to develope _Session Outliner_:
  * [classy](https://github.com/mitsuhiko/classy)
+ * [jQuery](http://jquery.com/)
  * [jqTree](http://mbraak.github.io/jqTree/)
+
+Some icons were taken from the [Tango Icon Library](http://tango.freedesktop.org/Tango_Icon_Library).

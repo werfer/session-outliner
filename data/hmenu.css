@@ -1,0 +1,108 @@
+/* Session Outliner
+ * Copyright (C) 2014, Josef Schmeißer
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+.hmenu {
+    visibility: hidden;
+    position: absolute;
+    background-color: rgba(60, 50, 80, 0.3);
+    margin: auto;
+    left: 0;
+    width: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hmenu-panel {
+    display: inline-block;
+    position: absolute;
+    right: 0;
+    background-image: url('images/hmenu/menu_right.svg'),
+                      url('images/hmenu/menu_left.svg'),
+                      url('images/hmenu/menu_middle.svg');
+    background-repeat: no-repeat, no-repeat, repeat-x;
+    background-position: right top, left top, left top;
+    background-clip: padding-box, padding-box, content-box;
+    padding-left: 24px;
+    padding-right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    transform-style: preserve-3d;
+    cursor: default;
+}
+
+.hmenu-panel .hmenu-button {
+    display: inline-block;
+
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-clip: content-box;
+
+    margin: 4px 4px 4px 0;
+    width: 16px;
+    height: 16px;
+
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+.hmenu-panel .hmenu-button:hover {
+    box-shadow:  1px  1px 1px 1px #404040,
+                -1px -1px 1px 1px #737373;
+}
+
+/* FIXME:
+.hmenu-panel .hmenu-button:active {
+    box-shadow:  1px  1px 1px 1px #737373,
+                -1px -1px 1px 1px #404040;
+}
+*/
+
+/* workaround: */
+.hmenu-panel .hmenu-button-active {
+    box-shadow:  1px  1px 1px 1px #737373,
+                -1px -1px 1px 1px #404040 !important;
+}
+
+.hmenu-panel .edit-action {
+    background-image: url('images/hmenu/edit.svg');
+}
+
+.hmenu-panel .delete-action {
+    background-image: url('images/hmenu/delete.svg');
+}
+
+.hmenu-panel .close-action {
+    background-image: url('images/hmenu/close.svg');
+}
+
+.jqtree-tree .so-group-node > .hmenu,
+.jqtree-tree .so-window-node > .hmenu,
+.jqtree-tree .so-session-node > .hmenu {
+    height: 20px;
+}
+
+.jqtree-tree .so-tab-node > .hmenu {
+    height: 18px;
+}
+
+.jqtree-tree .so-separator-node > .hmenu {
+    height: 16px;
+}
+
+.jqtree-tree .so-text-node > .hmenu {
+    height: 15px;
+}
