@@ -176,6 +176,8 @@ $(function() {
         addon.port.emit("update");
     });
 
+    window.onresize = adjustSpacer;
+
     // request tree
     addon.port.emit("ready");
 });
@@ -219,11 +221,25 @@ function loadChildren(node, data) {
     }
 }
 
+function adjustSpacer() {
+    var root = $('#sessionTree').tree('getTree');
+    var sessionChildren = root.children[0].children;
+    var lastNode = sessionChildren[sessionChildren.length - 1];
+
+    if (lastNode) {
+        var spacerHeight = window.innerHeight - lastNode.element.offsetHeight - 4;
+        $("#spacer").css("height", spacerHeight);
+    } else {
+        $("#spacer").css("height", 0);
+    }
+}
+
 // ----------------------------------------------------------------------------
 
 addon.port.on("updateTreeData", function(data) {
     var $tree = $('#sessionTree');
     $tree.tree('loadData', [data]);
+    adjustSpacer();
 });
 
 addon.port.on("updateTreeNode", function(id, data) {
@@ -242,6 +258,7 @@ addon.port.on("updateTreeNode", function(id, data) {
     $tree.tree('updateNode', node, data);
 
     validateTree();
+    adjustSpacer();
 });
 
 addon.port.on("replaceTreeNode", function(id, data) {
@@ -257,6 +274,7 @@ addon.port.on("replaceTreeNode", function(id, data) {
     loadChildren(newNode, data);
 
     validateTree();
+    adjustSpacer();
 });
 
 addon.port.on("removeTreeNode", function(id) {
@@ -271,6 +289,7 @@ addon.port.on("removeTreeNode", function(id) {
     $tree.tree('removeNode', node);
 
     validateTree();
+    adjustSpacer();
 });
 
 addon.port.on("appendTreeNode", function(data, parentId) {
@@ -286,6 +305,7 @@ addon.port.on("appendTreeNode", function(data, parentId) {
     loadChildren(node, data);
 
     validateTree();
+    adjustSpacer();
 });
 
 addon.port.on("insertTreeNode", function(data, referenceId, after) {
@@ -306,6 +326,7 @@ addon.port.on("insertTreeNode", function(data, referenceId, after) {
     loadChildren(node, data);
 
     validateTree();
+    adjustSpacer();
 });
 
 addon.port.on("moveTreeNode", function(id, referenceId, position) {
@@ -324,8 +345,9 @@ addon.port.on("moveTreeNode", function(id, referenceId, position) {
     }
 
     $tree.tree('moveNode', node, referenceNode, position);
-    
+
     validateTree();
+    adjustSpacer();
 });
 
 // ****************************************************************************
