@@ -16,7 +16,6 @@
  */
 
 .hmenu {
-    visibility: hidden;
     position: absolute;
     background-color: rgba(60, 50, 80, 0.3);
     margin: auto;

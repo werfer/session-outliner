@@ -14,175 +14,119 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-$(function() {
-    var $tree = $('#sessionTree');
+function adjustSpacer() {
+    var root = $('#sessionTree').tree('getTree');
+    var sessionChildren = root.children[0].children;
+    var lastNode = sessionChildren[sessionChildren.length - 1];
 
-    function hideHoverMenu() {
-        $tree.find('.hmenu').each(function () {
-            $(this).css('visibility', 'hidden');
-        });
+    if (lastNode) {
+        var spacerHeight = window.innerHeight - lastNode.element.offsetHeight - 4;
+        $("#spacer").css("height", spacerHeight);
+    } else {
+        $("#spacer").css("height", 0);
+    }
+}
+
+function handleToggleEvent(e) {
+    addon.port.emit("treeEvent", "nodeToggle", e.node.id, e.node.is_open);
+}
+
+function hasActiveSubNodes(node) {
+    var children = node.children;
+    for (var i = 0, len = children.length; i < len; ++i) {
+        var currentNode = children[i];
+        var active = ("active" in currentNode) && currentNode.active;
+
+        if (active || hasActiveSubNodes(currentNode)) {
+            return true;
+        }
     }
 
-    $tree.mouseleave(hideHoverMenu);
+    return false;
+}
 
-    $tree.tree({
-        data: [],
-        autoOpen: false,
-        dragAndDrop: true,
-        onCreateLi: function(node, $li) {
-            $li.find('.jqtree-element').before(
-                '<div class="hmenu">' +
-                '<span class="hmenu-panel">' +
-                '<span class="hmenu-button delete-action" data-node-id="' + node.id + '"></span>' +
-                '<span class="hmenu-button close-action" data-node-id="' + node.id + '"></span>' +
-                '</span>' +
-                '</div>'
-            );
+function hideHoverMenu() {
+    $(".hmenu").remove();
+}
 
-            $li.find('.jqtree-element').mouseenter(function () {
-                hideHoverMenu();
-                $(this).prev().css('visibility', 'visible');
-            });
-
-            if ("active" in node && !node.active) {
-                $li.addClass("inactive-node");
-            }
-
-            if (node.type == "tab") {
-                $li.find('.jqtree-title').
-                    before('<img class="icon" src="' + node.favicon + '" />');
-            }
-
-            $li.addClass("so-" + node.type + "-node");
-        },
-        onCanSelectNode: function(node) {
-            return true;
-        },
-        onCanMove: function(node) {
-            return true;
-        },
-        onCanMoveTo: function(moved_node, target_node, position) {
-            return true;
-        }
-    });
-
-    // Handle a click on the delete link
-    $tree.on(
-        'click', '.delete-action',
-        function(e) {
-            // Get the id from the 'node-id' data property
-            var node_id = $(e.target).data('node-id');
-
-            // Get the node from the tree
-            var node = $tree.tree('getNodeById', node_id);
-
-            if (node) {
-                var detach = ("is_open" in node) && node.is_open;
-                addon.port.emit("treeEvent", "removeNode", node_id, detach);
-            }
-        }
-    );
-
-    $tree.on(
-        'click', '.close-action',
-        function(e) {
-            // Get the id from the 'node-id' data property
-
-            var node_id = $(e.target).data('node-id');
-            var node = $tree.tree('getNodeById', node_id);
-            if (node) {
-                var withSubNodes = ("is_open" in node) && !node.is_open;
-                addon.port.emit("treeEvent", "closeNode", node_id, withSubNodes);
-            }
-        }
-    );
-
-    $('#sessionTree').bind(
-        'tree.dblclick',
-        function(e) {
-            addon.port.emit("treeEvent", "activateNode", e.node.id);
-        }
-    );
-
-    function handleToggle(e) {
-        addon.port.emit("treeEvent", "nodeToggle", e.node.id, e.node.is_open);
+function getNodeByElement($treeElement) {
+    var $li = $treeElement.closest('li.jqtree_common');
+    if ($li.length === 0) {
+        return null;
     }
 
-    $('#sessionTree').bind(
-        'tree.open',
-        handleToggle
-    );
+    return $li.data('node');
+}
 
-    $('#sessionTree').bind(
-        'tree.close',
-        handleToggle
-    );
+function loadChildren(node, data) {
+    if ("children" in data) {
+        var $tree = $('#sessionTree');
+        $tree.tree('loadData', data.children, node);
+        return;
+    }
+}
 
-    $('#sessionTree').bind(
-        'tree.move',
-        function(event) {
-            event.preventDefault();
-            var nodeId   = event.move_info.moved_node.id;
-            var targetId = event.move_info.target_node.id;
-            var position = event.move_info.position;
-            addon.port.emit("treeEvent", "moveNode", nodeId, targetId, position);
-        }
-    );
+function provideCloseAction(node) {
+    var active = ("active" in node) && node.active;
 
-    $(".test").click(function() {
-        addon.port.emit("test", $(this).attr("id"));
-    });
+    if (active) {
+        return true;
+    } else  {
+        var collapsed = ("is_open" in node) && !node.is_open;
+        return (collapsed && hasActiveSubNodes(node));
+    }
+}
 
-    //[ workaround:
-    $tree.on(
-        'mousedown', '.hmenu-button',
-        function(e) {
-            $(this).addClass('hmenu-button-active');
-        }
-    );
+function showHoverMenu($treeElement) {
+    var node = getNodeByElement($treeElement);
+    if (!!node == false) {
+        return;
+    }
 
-    $tree.on(
-        'mouseleave', '.hmenu-button',
-        function(e) {
-            $(this).removeClass('hmenu-button-active');
-        }
-    );
+    var actions = [];
 
-    $tree.on(
-        'mouseup', '.hmenu-button',
-        function(e) {
-            $(this).removeClass('hmenu-button-active');
-        }
-    );
+    // edit action:
+    if (node.type == "session" ||
+        node.type == "group" ||
+        node.type == "window" ||
+        node.type == "text")
+    {
+        actions.push("edit-action");
+    }
+
+    // delete action:
+    if (node.type != "session") {
+        actions.push("delete-action");
+    }
+
+    // close action:
+    if (provideCloseAction(node)) {
+        actions.push("close-action");
+    }
+
+    if (actions.length === 0) {
+        return;
+    }
+
+    //[ create menu
+    var container = document.createElement("div");
+    container.className = "hmenu";
+
+    var panel = document.createElement("span");
+    panel.className = "hmenu-panel";
+
+    for (var i = 0, len = actions.length; i < len; ++i) {
+        var action = document.createElement("span");
+        action.className = "hmenu-button " + actions[i];
+        action.setAttribute("data-node-id", node.id);
+
+        panel.appendChild(action);
+    }
+
+    container.appendChild(panel);
+    $treeElement.before(container);
     //]
-
-    $(".mainMenuLink").click(function() {
-        var action   = $(this).attr("id");
-        var node     = $tree.tree('getSelectedNode');
-        var targetId;
-
-        if (!!node == false) {
-            var rootNode    = $('#sessionTree').tree('getTree');
-            var sessionNode = rootNode.children[0];
-            targetId = sessionNode.id;
-        } else {
-            targetId = node.id;
-        }
-
-        addon.port.emit("menuEvent", action, targetId);
-    });
-
-    $("#update").click(function() {
-        addon.port.emit("update");
-    });
-
-    window.onresize = adjustSpacer;
-
-    // request tree
-    addon.port.emit("ready");
-});
-
-// ****************************************************************************
+}
 
 function validateTree() {
     var root = $('#sessionTree').tree('getTree');
@@ -213,28 +157,170 @@ function validateTree() {
     walker(root);
 }
 
-function loadChildren(node, data) {
-    if ("children" in data) {
-        var $tree = $('#sessionTree');
-        $tree.tree('loadData', data.children, node);
-        return;
-    }
-}
+// ****************************************************************************
+// initialization:
 
-function adjustSpacer() {
-    var root = $('#sessionTree').tree('getTree');
-    var sessionChildren = root.children[0].children;
-    var lastNode = sessionChildren[sessionChildren.length - 1];
+$(function() {
+    var $tree = $('#sessionTree');
 
-    if (lastNode) {
-        var spacerHeight = window.innerHeight - lastNode.element.offsetHeight - 4;
-        $("#spacer").css("height", spacerHeight);
-    } else {
-        $("#spacer").css("height", 0);
-    }
-}
+    $tree.tree({
+        data: [],
+        autoOpen: false,
+        dragAndDrop: true,
+        onCreateLi: function(node, $li) {
+            $li.find('.jqtree-element').mouseenter(function(e) {
+                var $treeElement = $(e.target).closest('.jqtree-element');
+                if (!!$treeElement == false) {
+                    return;
+                }
 
-// ----------------------------------------------------------------------------
+                hideHoverMenu();
+                showHoverMenu($treeElement);
+            });
+
+            if ("active" in node && !node.active) {
+                $li.addClass("inactive-node");
+            }
+
+            if (node.type == "tab") {
+                $li.find('.jqtree-title').
+                    before('<img class="icon" src="' + node.favicon + '" />');
+            }
+
+            $li.addClass("so-" + node.type + "-node");
+        },
+        onCanSelectNode: function(node) {
+            return true;
+        },
+        onCanMove: function(node) {
+            return true;
+        },
+        onCanMoveTo: function(moved_node, target_node, position) {
+            return true;
+        }
+    });
+
+    $tree.mouseleave(hideHoverMenu);
+
+    // Handle a click on the delete link
+    $tree.on(
+        'click', '.delete-action',
+        function(e) {
+            // Get the id from the 'node-id' data property
+            var node_id = $(e.target).data('node-id');
+
+            // Get the node from the tree
+            var node = $tree.tree('getNodeById', node_id);
+
+            if (node) {
+                var detach = ("is_open" in node) && node.is_open;
+                addon.port.emit("treeEvent", "removeNode", node_id, detach);
+            }
+        }
+    );
+
+    $tree.on(
+        'click', '.close-action',
+        function(e) {
+            var node_id = $(e.target).data('node-id');
+            var node = $tree.tree('getNodeById', node_id);
+
+            if (node) {
+                var withSubNodes = ("is_open" in node) && !node.is_open;
+                addon.port.emit("treeEvent", "closeNode", node_id, withSubNodes);
+            }
+        }
+    );
+
+    $tree.on(
+        'click', '.edit-action',
+        function(e) {
+            var node_id = $(e.target).data('node-id');
+            var node = $tree.tree('getNodeById', node_id);
+
+            if (node) {
+                alert("not implemented");
+            }
+        }
+    );
+
+    //[ workaround:
+    $tree.on(
+        'mousedown', '.hmenu-button',
+        function(e) {
+            $(this).addClass('hmenu-button-active');
+        }
+    );
+
+    $tree.on(
+        'mouseleave', '.hmenu-button',
+        function(e) {
+            $(this).removeClass('hmenu-button-active');
+        }
+    );
+
+    $tree.on(
+        'mouseup', '.hmenu-button',
+        function(e) {
+            $(this).removeClass('hmenu-button-active');
+        }
+    );
+    //]
+
+    $tree.bind('tree.open', handleToggleEvent);
+
+    $tree.bind('tree.close', handleToggleEvent);
+
+    $tree.bind(
+        'tree.dblclick',
+        function(e) {
+            addon.port.emit("treeEvent", "activateNode", e.node.id);
+        }
+    );
+
+    $tree.bind(
+        'tree.move',
+        function(event) {
+            event.preventDefault();
+            var nodeId   = event.move_info.moved_node.id;
+            var targetId = event.move_info.target_node.id;
+            var position = event.move_info.position;
+            addon.port.emit("treeEvent", "moveNode", nodeId, targetId, position);
+        }
+    );
+
+    $(".mainMenuLink").click(function() {
+        var action   = $(this).attr("id");
+        var node     = $tree.tree('getSelectedNode');
+        var targetId;
+
+        if (!!node == false) {
+            var rootNode    = $('#sessionTree').tree('getTree');
+            var sessionNode = rootNode.children[0];
+            targetId = sessionNode.id;
+        } else {
+            targetId = node.id;
+        }
+
+        addon.port.emit("menuEvent", action, targetId);
+    });
+
+    $("#update").click(function() {
+        addon.port.emit("update");
+    });
+
+    $(".test").click(function() {
+        addon.port.emit("test", $(this).attr("id"));
+    });
+
+    window.onresize = adjustSpacer;
+
+    // request tree
+    addon.port.emit("ready");
+});
+
+// ****************************************************************************
+// Model event handlers:
 
 addon.port.on("updateTreeData", function(data) {
     var $tree = $('#sessionTree');
@@ -352,6 +438,7 @@ addon.port.on("moveTreeNode", function(id, referenceId, position) {
 
 // ****************************************************************************
 // TEST:
+
 addon.port.on("updateTreeData", function(data) {
     $("#treeData").text(JSON.stringify(data, undefined, 2));
 });
