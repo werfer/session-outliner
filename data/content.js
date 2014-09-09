@@ -49,6 +49,11 @@ function hideHoverMenu() {
     $(".hmenu").remove();
 }
 
+function getLabel(oldLabel) {
+    var label = prompt("Label:", oldLabel);
+    return label;
+}
+
 function getNodeByElement($treeElement) {
     var $li = $treeElement.closest('li.jqtree_common');
     if ($li.length === 0) {
@@ -212,10 +217,12 @@ $(function() {
             // Get the node from the tree
             var node = $tree.tree('getNodeById', node_id);
 
-            if (node) {
-                var detach = ("is_open" in node) && node.is_open;
-                addon.port.emit("treeEvent", "removeNode", node_id, detach);
+            if (!!node == false) {
+                return;
             }
+
+            var detach = ("is_open" in node) && node.is_open;
+            addon.port.emit("treeEvent", "removeNode", node_id, detach);
         }
     );
 
@@ -225,10 +232,12 @@ $(function() {
             var node_id = $(e.target).data('node-id');
             var node = $tree.tree('getNodeById', node_id);
 
-            if (node) {
-                var withSubNodes = ("is_open" in node) && !node.is_open;
-                addon.port.emit("treeEvent", "closeNode", node_id, withSubNodes);
+            if (!!node == false) {
+                return;
             }
+
+            var withSubNodes = ("is_open" in node) && !node.is_open;
+            addon.port.emit("treeEvent", "closeNode", node_id, withSubNodes);
         }
     );
 
@@ -238,9 +247,16 @@ $(function() {
             var node_id = $(e.target).data('node-id');
             var node = $tree.tree('getNodeById', node_id);
 
-            if (node) {
-                alert("not implemented");
+            if (!!node == false) {
+                return;
             }
+
+            var newLabel = getLabel(node.name);
+            if (!!newLabel == false) {
+                return;
+            }
+
+            addon.port.emit("treeEvent", "changeLabel", node_id, newLabel);
         }
     );
 
@@ -292,17 +308,28 @@ $(function() {
     $(".mainMenuLink").click(function() {
         var action   = $(this).attr("id");
         var node     = $tree.tree('getSelectedNode');
-        var targetId;
+        var params   = ["menuEvent", action];
 
+        //[ get target Id
         if (!!node == false) {
             var rootNode    = $('#sessionTree').tree('getTree');
             var sessionNode = rootNode.children[0];
-            targetId = sessionNode.id;
+            params.push(sessionNode.id);
         } else {
-            targetId = node.id;
+            params.push(node.id);
+        }
+        //]
+
+        if (action == "createNoteLink") {
+            var label = getLabel("#");
+            if (!!label == false) {
+                return;
+            }
+
+            params.push(label);
         }
 
-        addon.port.emit("menuEvent", action, targetId);
+        addon.port.emit.apply(addon.port, params);
     });
 
     $("#update").click(function() {

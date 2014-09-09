@@ -27,7 +27,7 @@ TODO
 Probably the most important task to deal with is the improvement of the frontend's apperance.
 Other notable things to implement:
  * `[x]` detect opener tab (unlike Chrome Firefox has no _openerTabId_ property)
- * `[ ]` completion of the text-node and separator-node support
+ * `[x]` completion of the text-node and separator-node support
  * `[ ]` session export/import support
 
 
