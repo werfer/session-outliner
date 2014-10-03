@@ -183,7 +183,8 @@ $(function() {
                 showHoverMenu($treeElement);
             });
 
-            if ("active" in node && !node.active) {
+            var isActive = "active" in node && node.active;
+            if (!isActive) {
                 $li.addClass("inactive-node");
             }
 
