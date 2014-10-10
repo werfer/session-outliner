@@ -293,9 +293,12 @@ $(function() {
                 showHoverMenu($treeElement);
             });
 
-            var isActive = "active" in node && node.active;
-            if (!isActive) {
+            if (!isActive(node)) {
                 $li.addClass("inactive-node");
+            }
+
+            if (isPinned(node)) {
+                $li.addClass("pinned-node");
             }
 
             if (node.type == "tab") {

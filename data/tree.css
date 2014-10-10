@@ -198,6 +198,12 @@ ul.jqtree-tree .so-tab-node.inactive-node > .jqtree-element .jqtree-title {
     color: rgb(160, 160, 160);
 }
 
+ul.jqtree-tree .so-tab-node.pinned-node > .jqtree-element .jqtree-title::before {
+    content: "[P]";
+    color: white;
+    margin-right: 0.25em;
+}
+
 ul.jqtree-tree .so-group-node > .jqtree-element .jqtree-title {
     background-color: rgb(200, 170, 30);
 }
