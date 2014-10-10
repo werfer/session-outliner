@@ -27,6 +27,116 @@ function adjustSpacer() {
     }
 }
 
+function canMoveTo(node, targetNode, position) {
+    if ((targetNode.type == "session") &&
+        (position != "inside"))
+    {
+        return false;
+    }
+
+    if ((!isContainer(targetNode)) &&
+        (position == "inside"))
+    {
+        return false;
+    }
+
+    if (node.type == "tab") {
+        var windowNode;
+
+        //[ every tab node has to be inside a window node
+        switch (position) {
+            case "inside":
+                windowNode = getWindowNode(targetNode);
+                break;
+            case "after":
+            case "before":
+                var parentNode = targetNode.parent;
+                if (parentNode) {
+                    windowNode = getWindowNode(parentNode);
+                }
+                break;
+        }
+
+        if (!windowNode) {
+            return false;
+        }
+        //]
+
+        //[ isolate pinned area (the pinned area end with the first node which is not pinned)
+        var borderNode = null;
+        var pinnedArea = [];
+        var followingIndex = 0;
+
+        var descendants = getDescendants(windowNode);
+        for (var i = 0, len = descendants.length; i < len; ++i) {
+            var currentNode = descendants[i];
+
+            if ((currentNode.type == "tab") &&
+                (!isPinned(currentNode)))
+            {
+                followingIndex = i;
+                break;
+            }
+        }
+
+        if (followingIndex > 0) {
+            pinnedArea = descendants.slice(0, followingIndex);
+            borderNode = pinnedArea[followingIndex - 1];
+
+            var nextParent = borderNode.parent;
+            while (!isTabContainer(nextParent)) {
+                borderNode = nextParent;
+                nextParent = borderNode.parent;
+            }
+        }
+        //]
+
+        //[ validate move target
+        var result = true;
+        var targetInPinnedArea = (pinnedArea.indexOf(targetNode) != -1);
+
+        if (isPinned(node)) {
+            switch (position) {
+                case "before":
+                    if (!targetInPinnedArea) {
+                        var index = descendants.indexOf(targetNode);
+                        result &= (pinnedArea.length == index);
+                    }
+                    break;
+                case "after":
+                case "inside":
+                    if (targetNode !== windowNode) {
+                        result &= targetInPinnedArea;
+                    }
+                    break;
+            }
+        } else {
+            switch (position) {
+                case "after":
+                    if (targetInPinnedArea) {
+                        result &= (targetNode === borderNode);
+                    }
+                    break;
+                case "before":
+                case "inside":
+                    if (targetNode === windowNode) {
+                        result &= isEmpty(pinnedArea);
+                    } else {
+                        result &= !targetInPinnedArea;
+                    }
+                    break;
+            }
+        }
+
+        if (!result) {
+            return false;
+        }
+        //]
+    }
+
+    return true;
+}
+
 function handleToggleEvent(e) {
     addon.port.emit("treeEvent", "nodeToggle", e.node.id, e.node.is_open);
 }
@@ -199,11 +309,9 @@ $(function() {
             return true;
         },
         onCanMove: function(node) {
-            return true;
+            return (node.type != "session");
         },
-        onCanMoveTo: function(moved_node, target_node, position) {
-            return true;
-        }
+        onCanMoveTo: canMoveTo
     });
 
     $tree.mouseleave(hideHoverMenu);
