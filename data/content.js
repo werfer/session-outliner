@@ -276,6 +276,11 @@ function validateTree() {
 // initialization:
 
 $(function() {
+    if (!!window.addon == false) {
+        alert("Jetpack communication port is not available!");
+        return;
+    }
+
     var $tree = $('#sessionTree');
 
     $tree.tree({
