@@ -46,6 +46,10 @@ function isActive(node) {
     return ("active" in node) && node.active;
 }
 
+function isSelected(node) {
+    return ("selected" in node) && node.selected;
+}
+
 function isPinned(node) {
     return ("pinned" in node) && node.pinned;
 }
@@ -113,6 +117,30 @@ function traverse(callback, containerNode, opt) {
     };
 
     return traverseNode(containerNode);
+}
+
+function matchNodes(predicate, containerNode, opt) {
+    var results = [];
+    var search = function(node) {
+        if (predicate(node)) {
+            results.push(node);
+        }
+
+        return Traverse.CONTINUE; // continue
+    }
+
+    traverse(search, containerNode, opt);
+    return results;
+}
+
+function filterNestedWindows(groupNode) {
+    return {
+        containerNode: groupNode,
+        skipNodePredicate: function(currentNode) {
+            return ((isTabContainer(currentNode)) &&
+                    (currentNode !== groupNode));
+        }
+    };
 }
 
 function getDescendants(windowNode) {

@@ -302,6 +302,10 @@ $(function() {
                 $li.addClass("inactive-node");
             }
 
+            if (isSelected(node)) {
+                $li.addClass("selected-node");
+            }
+
             if (isPinned(node)) {
                 $li.addClass("pinned-node");
             }
@@ -578,6 +582,33 @@ addon.port.on("moveTreeNode", function(id, referenceId, position) {
 
     validateTree();
     adjustSpacer();
+});
+
+addon.port.on("tabSelect", function(id) {
+    var $tree = $('#sessionTree');
+
+    var selectedNode = $tree.tree('getNodeById', id);
+    if (!selectedNode) {
+        console.error("selectedNode not found!");
+        return;
+    }
+
+    var windowNode = getWindowNode(selectedNode);
+    if (!windowNode) {
+        console.error("windowNode not found!");
+        return;
+    }
+
+    var tabNodes = matchNodes(function(currentNode) {
+        return (currentNode.type == "tab");
+    }, windowNode, filterNestedWindows(windowNode));
+
+    for (var i = 0, len = tabNodes.length; i < len; ++i) {
+        var tabNode = tabNodes[i];
+
+        var isSelected = !!(tabNode === selectedNode);
+        $tree.tree('updateNode', tabNode, { selected: isSelected });
+    }
 });
 
 // ****************************************************************************
