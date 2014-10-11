@@ -472,7 +472,7 @@ addon.port.on("updateTreeNode", function(id, data) {
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
-        console.error("error node not found!");
+        console.error("node not found!");
         return;
     }
 
@@ -491,7 +491,7 @@ addon.port.on("replaceTreeNode", function(id, data) {
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
-        console.error("error node not found!");
+        console.error("node not found!");
         return;
     }
 
@@ -507,7 +507,7 @@ addon.port.on("removeTreeNode", function(id) {
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
-        console.error("error node not found!");
+        console.error("node not found!");
         return;
     }
 
@@ -522,7 +522,7 @@ addon.port.on("appendTreeNode", function(data, parentId) {
 
     var parentNode = $tree.tree('getNodeById', parentId);
     if (!parentNode) {
-        console.error("error node not found!");
+        console.error("node not found!");
         return;
     }
 
@@ -538,7 +538,7 @@ addon.port.on("insertTreeNode", function(data, referenceId, after) {
 
     var referenceNode = $tree.tree('getNodeById', referenceId);
     if (!referenceNode) {
-        console.error("error referenceNode not found!");
+        console.error("referenceNode not found!");
         return;
     }
 
@@ -559,13 +559,13 @@ addon.port.on("moveTreeNode", function(id, referenceId, position) {
 
     var node = $tree.tree('getNodeById', id);
     if (!node) {
-        console.error("error node not found!");
+        console.error("node not found!");
         return;
     }
 
     var referenceNode = $tree.tree('getNodeById', referenceId);
     if (!referenceNode) {
-        console.error("error referenceNode not found!");
+        console.error("referenceNode not found!");
         return;
     }
 
