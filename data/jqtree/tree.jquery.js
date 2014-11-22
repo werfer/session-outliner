@@ -812,21 +812,33 @@ limitations under the License.
       }
     };
 
-    ElementsRenderer.prototype.renderNode = function(node) {
+    ElementsRenderer.prototype.renderNodeInternal = function(node) {
       var li, parent_node_element, previous_node;
-      $(node.element).remove();
       parent_node_element = new NodeElement(node.parent, this.tree_widget);
       li = this.createLi(node);
       this.attachNodeData(node, li);
       previous_node = node.getPreviousSibling();
       if (previous_node) {
-        $(previous_node.element).after(li);
+        return $(previous_node.element).after(li);
       } else {
-        parent_node_element.getUl().prepend(li);
+        return parent_node_element.getUl().prepend(li);
       }
+    };
+
+    ElementsRenderer.prototype.renderNode = function(node) {
+      $(node.element).remove();
+      this.renderNodeInternal(node);
       if (node.children) {
         return this.renderFromNode(node);
       }
+    };
+
+    ElementsRenderer.prototype.renderSingleNode = function(node) {
+      var ul;
+      ul = $(node.element).children('ul').detach();
+      $(node.element).remove();
+      this.renderNodeInternal(node);
+      return $(node.element).append(ul);
     };
 
     ElementsRenderer.prototype.renderFromRoot = function() {
@@ -1394,6 +1406,9 @@ limitations under the License.
 
     JqTreeWidget.prototype.updateNode = function(node, data) {
       var id_is_changed;
+      if (data.children) {
+        throw new Error;
+      }
       id_is_changed = data.id && data.id !== node.id;
       if (id_is_changed) {
         this.tree.removeNodeFromIndex(node);
@@ -1402,7 +1417,7 @@ limitations under the License.
       if (id_is_changed) {
         this.tree.addNodeToIndex(node);
       }
-      this.renderer.renderNode(node);
+      this.renderer.renderSingleNode(node);
       return this._selectCurrentNode();
     };
 

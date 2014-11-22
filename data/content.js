@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+var $tree = null;
+
 function adjustSpacer() {
-    var root = $('#sessionTree').tree('getTree');
-    var sessionChildren = root.children[0].children;
+    var sessionNode = getSessionNode();
+    var sessionChildren = sessionNode.children;
     var lastNode = sessionChildren[sessionChildren.length - 1];
 
     if (lastNode) {
@@ -62,7 +64,7 @@ function canMoveTo(node, targetNode, position) {
         }
         //]
 
-        //[ isolate pinned area (the pinned area end with the first node which is not pinned)
+        //[ isolate pinned area (the pinned area ends with the first node which is not pinned)
         var borderNode = null;
         var pinnedArea = [];
         var followingIndex = 0;
@@ -173,9 +175,13 @@ function getNodeByElement($treeElement) {
     return $li.data('node');
 }
 
+function getSessionNode() {
+    var rootNode = $tree.tree('getTree');
+    return rootNode.children[0];
+}
+
 function loadChildren(node, data) {
     if ("children" in data) {
-        var $tree = $('#sessionTree');
         $tree.tree('loadData', data.children, node);
         return;
     }
@@ -243,8 +249,144 @@ function showHoverMenu($treeElement) {
     //]
 }
 
+const UpdateReason = {
+    INSERT: 0,
+    REMOVE: 1
+};
+
+function updateNodeCount(updateReason, affectedNode) {
+    var hasSubNodes = hasChildren(affectedNode);
+
+    var deltaNodeCount = 1; // itself
+    var deltaActiveTabCount = 0;
+    var deltaActiveWindowCount = 0;
+
+    //[ collect delta
+    if (isActiveTab(affectedNode)) {
+        deltaActiveTabCount += 1;
+    } else if (isActiveWindow(affectedNode)) {
+        deltaActiveWindowCount += 1;
+    }
+
+    if (updateReason == UpdateReason.INSERT) {
+        initializeNodeCount(affectedNode)
+    }
+
+    if (isContainer(affectedNode)) {
+        deltaNodeCount += affectedNode.subNodeCount.nodes;
+        deltaActiveTabCount += affectedNode.subNodeCount.activeTabNodes;
+        deltaActiveWindowCount += affectedNode.subNodeCount.activeWindowNodes;
+    }
+    //]
+
+    if (updateReason == UpdateReason.REMOVE) {
+        deltaNodeCount = -deltaNodeCount;
+        deltaActiveTabCount = -deltaActiveTabCount;
+        deltaActiveWindowCount = -deltaActiveWindowCount;
+    }
+
+    //[ update parent hierarchy
+    var parentWalker = function(currentParent) {
+        var subNodeCount = currentParent.subNodeCount;
+
+        // update
+        subNodeCount.nodes += deltaNodeCount;
+        subNodeCount.activeTabNodes += deltaActiveTabCount;
+        subNodeCount.activeWindowNodes += deltaActiveWindowCount;
+
+        $tree.tree(
+            'updateNode',
+            currentParent,
+            { subNodeCount: subNodeCount }
+        );
+
+        if (currentParent.type == "session") {
+            return;
+        }
+
+        var nextParent = currentParent.parent;
+        if (!!nextParent != false) {
+            parentWalker(nextParent);
+        }
+    };
+
+    parentWalker(affectedNode.parent);
+    //]
+}
+
+function initializeNodeCount(node) {
+    var subNodeCount = {
+        nodes: 0,
+        activeTabNodes: 0,
+        activeWindowNodes: 0
+    };
+
+    var children = node.children;
+    for (var i = 0, len = children.length; i < len; ++i) {
+        var currentNode = children[i];
+
+        subNodeCount.nodes += 1;
+
+        if (isActiveTab(currentNode)) {
+            subNodeCount.activeTabNodes += 1;
+        } else if (isActiveWindow(currentNode)) {
+            subNodeCount.activeWindowNodes += 1;
+        }
+
+        if (isContainer(currentNode)) {
+            initializeNodeCount(currentNode);
+
+            subNodeCount.nodes += currentNode.subNodeCount.nodes;
+            subNodeCount.activeTabNodes += currentNode.subNodeCount.activeTabNodes;
+            subNodeCount.activeWindowNodes += currentNode.subNodeCount.activeWindowNodes;
+        }
+    }
+
+    node.subNodeCount = subNodeCount;
+
+    $tree.tree(
+        'updateNode',
+        node,
+        { subNodeCount: subNodeCount }
+    );
+}
+
+function displayNodeCount(node, $li) {
+    if (!hasChildren(node)) {
+        return;
+    }
+
+    var nodeCount = node.subNodeCount;
+
+    console.log("Node #", node.id, "count:", node.subNodeCount);
+
+    var nodeCountSpan = document.createElement("span");
+    nodeCountSpan.className = "node-count";
+    nodeCountSpan.appendChild(
+        document.createTextNode(
+            "[" + nodeCount.nodes + "n|" +
+            nodeCount.activeTabNodes + "t|" +
+            nodeCount.activeWindowNodes + "w]"
+        )
+    );
+
+    $li.find('.jqtree-title').
+        prepend(nodeCountSpan);
+}
+
+function displayNodeCountIf(predicate, node, $li) {
+    if (predicate(node)) {
+        displayNodeCount(node, $li);
+    }
+}
+
+function displayNodeCountPredicate(node) {
+    var result = ("is_open" in node) && !node.is_open;
+    return result;
+}
+
 function validateTree() {
-    var root = $('#sessionTree').tree('getTree');
+    var root = $tree.tree('getTree');
     var id_mapping = root.id_mapping;
 
     var walker = function(node) {
@@ -281,8 +423,7 @@ $(function() {
         return;
     }
 
-    var $tree = $('#sessionTree');
-
+    $tree = $('#sessionTree');
     $tree.tree({
         data: [],
         autoOpen: false,
@@ -313,6 +454,10 @@ $(function() {
             if (node.type == "tab") {
                 $li.find('.jqtree-title').
                     before('<img class="icon" src="' + node.favicon + '" />');
+            }
+
+            if (isContainer(node) && ("subNodeCount" in node)) {
+                displayNodeCountIf(displayNodeCountPredicate, node, $li);
             }
 
             $li.addClass("so-" + node.type + "-node");
@@ -433,8 +578,7 @@ $(function() {
 
         //[ get target Id
         if (!!node == false) {
-            var rootNode    = $('#sessionTree').tree('getTree');
-            var sessionNode = rootNode.children[0];
+            var sessionNode = getSessionNode();
             params.push(sessionNode.id);
         } else {
             params.push(node.id);
@@ -471,14 +615,16 @@ $(function() {
 // Model event handlers:
 
 addon.port.on("updateTreeData", function(data) {
-    var $tree = $('#sessionTree');
     $tree.tree('loadData', [data]);
+
+    // handle node count
+    var sessionNode = getSessionNode();
+    initializeNodeCount(sessionNode);
+
     adjustSpacer();
 });
 
 addon.port.on("updateTreeNode", function(id, data) {
-    var $tree = $('#sessionTree');
-
     var node = $tree.tree('getNodeById', id);
     if (!node) {
         console.error("node not found!");
@@ -486,40 +632,43 @@ addon.port.on("updateTreeNode", function(id, data) {
     }
 
     if ("children" in data) {
+        console.warn("Node data should not contain sub nodes.");
         delete data["children"];
     }
 
     $tree.tree('updateNode', node, data);
+
+    // NOTE: its not necessary to call updateNodeCount()
 
     validateTree();
     adjustSpacer();
 });
 
 addon.port.on("replaceTreeNode", function(id, data) {
-    var $tree = $('#sessionTree');
-
     var node = $tree.tree('getNodeById', id);
     if (!node) {
         console.error("node not found!");
         return;
     }
 
+    updateNodeCount(UpdateReason.REMOVE, node);
+
     var newNode = $tree.tree('replaceNode', node, data);
     loadChildren(newNode, data);
+    updateNodeCount(UpdateReason.INSERT, newNode);
 
     validateTree();
     adjustSpacer();
 });
 
 addon.port.on("removeTreeNode", function(id) {
-    var $tree = $('#sessionTree');
-
     var node = $tree.tree('getNodeById', id);
     if (!node) {
         console.error("node not found!");
         return;
     }
 
+    updateNodeCount(UpdateReason.REMOVE, node);
     $tree.tree('removeNode', node);
 
     validateTree();
@@ -527,8 +676,6 @@ addon.port.on("removeTreeNode", function(id) {
 });
 
 addon.port.on("appendTreeNode", function(data, parentId) {
-    var $tree = $('#sessionTree');
-
     var parentNode = $tree.tree('getNodeById', parentId);
     if (!parentNode) {
         console.error("node not found!");
@@ -537,14 +684,13 @@ addon.port.on("appendTreeNode", function(data, parentId) {
 
     var node = $tree.tree('appendNode', data, parentNode);
     loadChildren(node, data);
+    updateNodeCount(UpdateReason.INSERT, node);
 
     validateTree();
     adjustSpacer();
 });
 
 addon.port.on("insertTreeNode", function(data, referenceId, after) {
-    var $tree = $('#sessionTree');
-
     var referenceNode = $tree.tree('getNodeById', referenceId);
     if (!referenceNode) {
         console.error("referenceNode not found!");
@@ -558,19 +704,20 @@ addon.port.on("insertTreeNode", function(data, referenceId, after) {
         node = $tree.tree('addNodeBefore', data, referenceNode);
     }
     loadChildren(node, data);
+    updateNodeCount(UpdateReason.INSERT, node);
 
     validateTree();
     adjustSpacer();
 });
 
 addon.port.on("moveTreeNode", function(id, referenceId, position) {
-    var $tree = $('#sessionTree');
-
     var node = $tree.tree('getNodeById', id);
     if (!node) {
         console.error("node not found!");
         return;
     }
+
+    updateNodeCount(UpdateReason.REMOVE, node);
 
     var referenceNode = $tree.tree('getNodeById', referenceId);
     if (!referenceNode) {
@@ -579,14 +726,13 @@ addon.port.on("moveTreeNode", function(id, referenceId, position) {
     }
 
     $tree.tree('moveNode', node, referenceNode, position);
+    updateNodeCount(UpdateReason.INSERT, node);
 
     validateTree();
     adjustSpacer();
 });
 
 addon.port.on("tabSelect", function(id) {
-    var $tree = $('#sessionTree');
-
     var selectedNode = $tree.tree('getNodeById', id);
     if (!selectedNode) {
         console.error("selectedNode not found!");

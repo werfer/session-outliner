@@ -176,6 +176,11 @@ ul.jqtree-tree .icon + .jqtree-title {
     margin-left: 0;
 }
 
+ul.jqtree-tree .node-count {
+    color: white;
+    margin-right: 0.25em;
+}
+
 ul.jqtree-tree .so-group-node > .jqtree-element .jqtree-title,
 ul.jqtree-tree .so-window-node > .jqtree-element .jqtree-title,
 ul.jqtree-tree .so-session-node > .jqtree-element .jqtree-title {

@@ -46,6 +46,14 @@ function isActive(node) {
     return ("active" in node) && node.active;
 }
 
+function isActiveTab(node) {
+    return (node.type == "tab") && isActive(node);
+}
+
+function isActiveWindow(node) {
+    return (node.type == "window") && isActive(node);
+}
+
 function isSelected(node) {
     return ("selected" in node) && node.selected;
 }
