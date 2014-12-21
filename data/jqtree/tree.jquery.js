@@ -2536,7 +2536,12 @@ limitations under the License.
       _iterateNode = (function(_this) {
         return function(node, next_node) {
           var $element, child, children_length, i, must_iterate_inside, _i, _len, _ref;
-          must_iterate_inside = (node.is_open || !node.element) && node.hasChildren();
+
+          // FIXME suddenly the root node got an element; why?
+//          must_iterate_inside = (node.is_open || !node.element) && node.hasChildren();
+          // temporary fix: parent is null for the root node
+          must_iterate_inside = (node.is_open || !node.parent) && node.hasChildren();
+
           if (node.element) {
             $element = $(node.element);
             if (!$element.is(':visible')) {

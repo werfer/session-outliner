@@ -30,6 +30,8 @@ function adjustSpacer() {
 }
 
 function canMoveTo(node, targetNode, position) {
+    //console.log(targetNode);
+
     if ((targetNode.type == "session") &&
         (position != "inside"))
     {
