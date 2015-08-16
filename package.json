@@ -1,9 +1,13 @@
 {
-  "name": "session-outliner",
   "title": "Session Outliner",
-  "id": "jid1-bKwjF20jqnc3Dg",
+  "name": "session-outliner",
+  "version": "0.1.0",
   "description": "Yet another session manager",
+  "main": "lib/main.js",
   "author": "Josef Schmeißer",
-  "license": "AGPLv3",
-  "version": "0.1"
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "AGPLv3"
 }
